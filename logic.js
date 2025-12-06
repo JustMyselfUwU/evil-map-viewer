@@ -4,7 +4,8 @@ var settings = { // cookies in future
     "show_labels":       true,
     "show_inserts":      true,
     "show_area_borders": false,
-    "show_tile_cursor":  true
+    "show_tile_cursor":  true,
+    "calc_mortar": true
 }
 
 var maps = {};
@@ -747,6 +748,26 @@ function on_doubleclick(e)
     params.set("pos", `${share_position.x}x${share_position.y}`)
 
     history.pushState('', '', '?' + params.toString());
+
+
+
+    let map_string = `X: ${share_position.x}, Y: ${share_position.y}`
+
+
+
+    let offset = get_offset()
+    let mortar_coords = {       "x": share_position.x-offset.x, 
+                                "y": share_position.y-offset.y, }
+
+    let target_string = `X: ${mortar_coords.x}, Y: ${mortar_coords.y}`
+    
+    console.log(map_string)
+    console.log(target_string)
+
+    document.getElementById("target_coords").innerHTML = target_string
+    document.getElementById("map_target_coords").innerHTML = map_string
+
+
 }
 
 // -----------
@@ -806,3 +827,47 @@ function toggle_setting(setting)
     settings[setting] = !settings[setting];
     requestAnimationFrame(canvas_draw);
 }
+
+
+//
+// Mortar Calc
+//
+function get_offset()
+{
+
+    let Map_ref = {     "x": document.getElementById("Map_ref.x").value, 
+                        "y": document.getElementById("Map_ref.y").value, }
+
+  
+    let Game_ref = {    "x": document.getElementById("Game_ref.x").value, 
+                        "y": document.getElementById("Game_ref.y").value, }
+
+
+
+    let offset = {      "x": Map_ref.x - Game_ref.x,
+                        "y": Map_ref.y - Game_ref.y }
+
+    return {"x":offset.x,"y":offset.y}
+
+    }
+//    let Map_target = {  "x": document.getElementById("Map_target.x").value, 
+//                        "y": document.getElementById("Map_target.y").value, }
+
+
+//    return { 
+ //      "x": Map_target.x - offset.x,
+  //      "y": Map_target.y - offset.y
+  //  }
+
+
+
+// on click set map target coords variable
+
+//   if (settings['calc_mortar'])
+//   {
+//
+//    let mortar_coords = GridCoords(event_location)
+//
+//    document.getElementById("target_coords.x").innerHTML = mortar_coords.x;
+//    document.getElementById("target_coords.y").innerHTML = mortar_coords.y;
+//   }
