@@ -757,7 +757,7 @@ function on_doubleclick(e)
 
     let offset = get_offset()
     let mortar_coords = {       "x": share_position.x-offset.x, 
-                                "y": -1*(-1*share_position.y-offset.y) }
+                                "y": share_position.y-offset.y, }
 
     let target_string = `X: ${mortar_coords.x}, Y: ${mortar_coords.y}`
     
