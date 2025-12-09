@@ -590,7 +590,7 @@ function on_keydown(e)
     switch (e.key)
     {
         // Zoom Out
-        case '-':
+  //      case '-':
         case '_':
             update_zoom(null, null, 0.6);
             break;
