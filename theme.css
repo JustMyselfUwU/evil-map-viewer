@@ -174,3 +174,16 @@ html {
   transition-duration: 0.1s;
   pointer-events: none;
 }
+
+.mortar_calc {
+  background-color: #88aaa6;
+  border: 2px solid var(--dark);
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  padding: 16px 4px 4px 4px;
+}
+
+.mortar_calc * {
+  font-family: "mono";
+}

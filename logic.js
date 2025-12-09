@@ -4,7 +4,8 @@ var settings = { // cookies in future
     "show_labels":       true,
     "show_inserts":      true,
     "show_area_borders": false,
-    "show_tile_cursor":  true
+    "show_tile_cursor":  true,
+    "calc_mortar": true
 }
 
 var maps = {};
@@ -743,17 +744,34 @@ function on_mousescroll(e, pinch)
 }
 
 // Handle doubleclick (copy location)
+
 function on_doubleclick(e)
 {
     let event_location = get_event_location(e);
 
     // Get tile position.
-    let share_position = get_tile32_position(event_location);
+    var share_position = get_tile32_position(event_location);
 
     console.log(share_position)
     params.set("pos", `${share_position.x}x${share_position.y}`)
 
     history.pushState('', '', '?' + params.toString());
+
+    map_cord_y = image.size.y / 32 - 1 - share_position.y
+
+    let map_string = `X: ${share_position.x}, Y: ${map_cord_y}`
+
+    let offset = get_offset()
+    let mortar_coords = {       "x": share_position.x-offset.x, 
+                                "y": map_cord_y-offset.y, }
+
+    let target_string = `X: ${mortar_coords.x}, Y: ${mortar_coords.y}`
+    
+    console.log(map_string)
+    console.log(target_string)
+
+    document.getElementById("target_coords").innerHTML = target_string
+    document.getElementById("map_target_coords").innerHTML = map_string
 }
 
 // -----------
@@ -830,7 +848,7 @@ Useful commands:
 `)
 }
 
-function mortar_calc(viewer_x, viewer_y, offset_x, offset_y)
+function mortar_calc_Tung(viewer_x, viewer_y, offset_x, offset_y)
 {
     if (viewer_x == null | viewer_y == null | offset_x == null| offset_y == null)
         throw 'You need to supply Viewer X and Y coordinates, and Offset X and Y coordinates (from mortar_calc_get_offset): "mortar_calc(0, 1, 2, 3)"';
@@ -849,3 +867,44 @@ function mortar_calc_get_offset(rmc_x, rmc_y, viewer_x, viewer_y)
 
     return rmc_x - viewer_x, rmc_y - viewer_y;
 }
+
+//
+// Mortar Calc
+//
+
+function mortar_calc(share_position)
+{
+    map_cord_y = image.size.y / 32 - 1 - share_position.y
+
+    let map_string = `X: ${share_position.x}, Y: ${map_cord_y}`
+
+    let offset = get_offset()
+    let mortar_coords = {       "x": share_position.x-offset.x, 
+                                "y": map_cord_y-offset.y, }
+
+    let target_string = `X: ${mortar_coords.x}, Y: ${mortar_coords.y}`
+    
+    console.log(map_string)
+    console.log(target_string)
+
+    document.getElementById("target_coords").innerHTML = target_string
+    document.getElementById("map_target_coords").innerHTML = map_string
+    }
+
+function get_offset()
+{
+
+    let Map_ref = {     "x": document.getElementById("Map_ref.x").value, 
+                        "y": document.getElementById("Map_ref.y").value, }
+
+    let Game_ref = {    "x": document.getElementById("Game_ref.x").value, 
+                        "y": document.getElementById("Game_ref.y").value, }
+
+
+
+    let offset = {      "x": Map_ref.x - Game_ref.x,
+                        "y": Map_ref.y - Game_ref.y }
+
+    return {"x":offset.x,"y":offset.y}
+
+    }
