@@ -42,6 +42,10 @@ var area_info_label;
 
 var tile_cursor;
 
+let map_cord_y
+let share_position;
+let mortar_coords;
+
 // Load maps.json from url
 async function load_maps_json(url)
 {
@@ -750,28 +754,13 @@ function on_doubleclick(e)
     let event_location = get_event_location(e);
 
     // Get tile position.
-    var share_position = get_tile32_position(event_location);
+    share_position = get_tile32_position(event_location);
 
-    console.log(share_position)
     params.set("pos", `${share_position.x}x${share_position.y}`)
 
     history.pushState('', '', '?' + params.toString());
 
-    map_cord_y = image.size.y / 32 - 1 - share_position.y
-
-    let map_string = `X: ${share_position.x}, Y: ${map_cord_y}`
-
-    let offset = get_offset()
-    let mortar_coords = {       "x": share_position.x-offset.x, 
-                                "y": map_cord_y-offset.y, }
-
-    let target_string = `X: ${mortar_coords.x}, Y: ${mortar_coords.y}`
-    
-    console.log(map_string)
-    console.log(target_string)
-
-    document.getElementById("target_coords").innerHTML = target_string
-    document.getElementById("map_target_coords").innerHTML = map_string
+    mortar_calc()
 }
 
 // -----------
@@ -872,20 +861,17 @@ function mortar_calc_get_offset(rmc_x, rmc_y, viewer_x, viewer_y)
 // Mortar Calc
 //
 
-function mortar_calc(share_position)
+function mortar_calc()
 {
     map_cord_y = image.size.y / 32 - 1 - share_position.y
 
     let map_string = `X: ${share_position.x}, Y: ${map_cord_y}`
 
     let offset = get_offset()
-    let mortar_coords = {       "x": share_position.x-offset.x, 
+    mortar_coords = {       "x": share_position.x-offset.x, 
                                 "y": map_cord_y-offset.y, }
 
     let target_string = `X: ${mortar_coords.x}, Y: ${mortar_coords.y}`
-    
-    console.log(map_string)
-    console.log(target_string)
 
     document.getElementById("target_coords").innerHTML = target_string
     document.getElementById("map_target_coords").innerHTML = map_string
@@ -908,3 +894,12 @@ function get_offset()
     return {"x":offset.x,"y":offset.y}
 
     }
+
+// set clicked coords to map coordinates
+function set_coords()
+{
+console.log(share_position.x)
+console.log(map_cord_y)
+document.getElementById("Map_ref.x").value = share_position.x
+document.getElementById("Map_ref.y").value = map_cord_y
+}
