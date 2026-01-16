@@ -19,8 +19,9 @@ var image = {
     "areas":   {}
 }
 
-var measures = {
+var measures = { 
     "position":   { x: 0, y: 0},
+    "offset":     { x: 0, y: 0},
     "start":      { x: 0, y: 0 },
     "zoom":       1,
     "zoom_last":  1,
@@ -92,16 +93,69 @@ function parse_maps(_maps, _parent = null)
             _parent.appendChild(_button);
             continue;
         }
+        // Clear and remove previous
+        document.getElementById(`maplist-${key}`)?.remove();
+
         // If list/dictionary of maps
         var _details = document.createElement("details");
-        _details.open = true;
+        // _details.open = true;
         var _title = document.createElement("summary");
         var _content = document.createElement("ul");
+        _details.setAttribute('id', `maplist-${key}`);
 
         _title.textContent = key;
         _details.appendChild(_title);
 
         parse_maps(value, _content)
+
+        _details.appendChild(_content);
+        _parent.appendChild(_details);
+    }
+}
+
+// Parse dictionary with inserts, areas (from Maps/map.json)
+function add_teleporters(_maps, _parent = null)
+{
+    if (!_maps)
+        return;
+
+    if (!_parent)
+        _parent = document.getElementById("maplist");
+
+    console.log(_maps, _parent);
+
+    // Iterate through _maps
+    for (const [key, value] of Object.entries(_maps))
+    {
+        // If map
+        if ('position' in value)
+        {
+            var _button = document.createElement("button");
+
+            _button.innerText = 'name' in value ? value.name : key;
+
+            _button.onclick = function ()
+            {
+                move_to(value.position);
+            };
+
+            maps[key] = value;
+            _parent.appendChild(_button);
+            continue;
+        }
+        // Clear and remove previous
+        document.getElementById(`maplist-${key}`)?.remove();
+
+        // If list/dictionary of maps
+        var _details = document.createElement("details");
+        var _title = document.createElement("summary");
+        var _content = document.createElement("ul");
+        _details.setAttribute('id', `maplist-${key}`);
+
+        _title.textContent = key;
+        _details.appendChild(_title);
+
+        add_teleporters(value, _content)
 
         _details.appendChild(_content);
         _parent.appendChild(_details);
@@ -207,9 +261,11 @@ function load_image_lone(_url)
     // Labels
     image.labels = [];
     toggle_hidden('button_labels', true);
+    document.getElementById("maplist-Labels")?.remove();
 
     // Inserts
     image.inserts = []
+    document.getElementById("maplist-Inserts")?.remove();
     insert_button_list.innerHTML = "";
 
     image.dimensions = {'x': 1, 'y': 1}
@@ -236,8 +292,9 @@ async function load_image_tiled(_path)
 
     // Check and load Labels
     image.labels = []
-    if ("labels" in image_json && settings.show_labels)
+    if ("labels" in image_json)
         image.labels = image_json.labels;
+    add_teleporters({"Labels": image.labels});
 
     toggle_hidden('button_labels', !image.labels.length)
     console.log(`Loaded ${image.labels.length} labels.`)
@@ -248,6 +305,7 @@ async function load_image_tiled(_path)
     if ("inserts" in image_json && settings.show_inserts)
         image.inserts = image_json.inserts;
     console.log(`Loaded ${image.inserts.length} inserts.`)
+    add_teleporters({"Inserts": image.inserts});
 
     canvas_clear()
 
@@ -257,6 +315,7 @@ async function load_image_tiled(_path)
                          y: Math.ceil(image.size.y / tile_size)}
 
     console.log(`Loading ${image.dimensions.x}:${image.dimensions.y} tiles.`)
+    get_param_position();
 
     image.tiles = []
     for (let _y = 0; _y < image.dimensions.y; _y++)
@@ -280,7 +339,6 @@ async function load_image_tiled(_path)
                 {
                     requestAnimationFrame(canvas_draw)
                     load_insert_buttons();
-                    get_param_position();
                 }
             }
         }
@@ -554,7 +612,7 @@ function update_area_info(event_location)
     //Check if we have areas
     if (!("points" in image.areas))
     {
-        area_info_label.textContent = `x: ${share_position.x}, y: ${share_position.y}\n`;
+        area_info_label.textContent = `x: ${share_position.x - measures.offset.x}, y: ${share_position.y - measures.offset.y}\n`;
         return;
     }
 
@@ -569,7 +627,7 @@ function update_area_info(event_location)
     if (_id in image.areas.points && "weedkiller" in image.areas.points[_id])
         _weed = image.areas.points[_id].weedkiller;
 
-    area_info_label.textContent = `"${_name}" - x: ${share_position.x}, y: ${share_position.y}\n`;
+    area_info_label.textContent = `"${_name}" - x: ${share_position.x - measures.offset.x}, y: ${share_position.y - measures.offset.y}\n`;
 
     if (!_prot)
         return;
@@ -582,6 +640,21 @@ function update_area_info(event_location)
         return;
 
     area_info_label.textContent += `\n\n Weedkiller: ${_weed}`
+}
+
+//
+function move_to(position)
+{
+    if (!position)
+        return;
+
+    measures.zoom = 2;
+    measures.position.x = -(position.x * 32) * measures.zoom + window.innerWidth / 2 - 16;
+    measures.position.y = -(position.y * 32) * measures.zoom + window.innerHeight / 2 - 16;
+
+    console.log(position, measures.position);
+
+    update_transform()
 }
 
 // ------
@@ -822,7 +895,7 @@ function toggle_setting(setting)
 }
 
 // ----------------
-// Secrets Features
+// Consele Commands
 // ----------------
 
 function help()
@@ -830,31 +903,24 @@ function help()
     console.log(`Made by @Tunguso4ka
 -------------------
 Useful commands:
-- mortar_calc(0, 1, 2, 3)             Transform viewer coords to inround coords by using offset.
-- mortar_calc_get_offset(0, 1, 2, 3)  Get offset between viewer and round.
-- load_image_lone("url")              Load your own image.
-- canvas_draw()                        Redraw canvas. May fix some rendering bugs.
+- set_round_offset(x, y, x, y)  Set map viewer offset for easier coord calculating.
+- load_image_lone("url")        Load your own image.
+- canvas_draw()                 Redraw canvas. May fix some rendering bugs.
 `)
 }
 
-function mortar_calc_Tung(viewer_x, viewer_y, offset_x, offset_y)
+function set_round_offset(map_x, map_y, rmc_x, rmc_y)
 {
-    if (viewer_x == null | viewer_y == null | offset_x == null| offset_y == null)
-        throw 'You need to supply Viewer X and Y coordinates, and Offset X and Y coordinates (from mortar_calc_get_offset): "mortar_calc(0, 1, 2, 3)"';
+    measures.offset = { x: 0, y: 0 }
+    if ((!map_x && map_x != 0) || (!map_y && map_y != 0))
+        return 'You need to supply Map Viewer coordinates of tile you lasered: \nset_round_offset(0, 1) \nOffset was removed.'
+    if ((!rmc_x && rmc_x != 0) || (!rmc_y && rmc_y != 0))
+        return 'You need to supply RMC-14 coordinates of tile you lasered: \nset_round_offset(0, 1, 2, 3) \nOffset was removed.'
 
-    viewer_x = image.size.x / 32 - viewer_x
+    map_x = image.size.x / 32 - map_x
 
-    return viewer_x - offset_x, viewer_y - offset_y;
-}
-
-function mortar_calc_get_offset(rmc_x, rmc_y, viewer_x, viewer_y)
-{
-    if (rmc_x == null || rmc_y == null || viewer_x == null || viewer_y == null)
-        throw 'You need to supply RMC14 X and Y coordinates, and Map Viewer X and Y coordinates: "mortar_calc_get_offset(0, 1, 2, 3)"';
-
-    viewer_x = image.size.x / 32 - viewer_x
-
-    return rmc_x - viewer_x, rmc_y - viewer_y;
+    measures.offset = { x: rmc_x - map_x, y: rmc_y - map_y }
+    console.log(`New offset: ${measures.offset.x}x ${measures.offset.y}y`)
 }
 
 //
